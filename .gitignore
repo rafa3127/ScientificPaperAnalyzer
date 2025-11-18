@@ -1,0 +1,102 @@
+# NetBeans specific
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+nbactions.xml
+
+# Class Files
+*.class
+
+# Package Files
+*.jar
+*.war
+*.ear
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Log files
+*.log
+
+# virtual machine crash logs
+hs_err_pid*
+
+# Compiled class file
+*.class
+
+# IntelliJ IDEA (por si alguien del equipo usa IntelliJ)
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Eclipse (por si alguien usa Eclipse)
+.classpath
+.project
+.settings/
+bin/
+
+# MacOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# Build folders
+build/
+dist/
+target/
+
+# Backup files
+*.bak
+*.swp
+*.swo
+*~
+
+# Test coverage
+*.gcov
+*.gcda
+*.gcno
+
+# JavaDoc
+doc/
+
+# Maven (por si se usa en el futuro)
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+
+# Gradle (por si se usa en el futuro)
+.gradle
+**/build/
+!src/**/build/
+gradle-app.setting
+!gradle-wrapper.jar
+.gradletasknamecache
+
+# Serialized data files (opcional, descomentar si no quieres versionar datos)
+# data/system/*.dat
+# data/system/*.ser
+
+# Personal notes (ya que están fuera del repo)
+# DESARROLLO.md está versionado, pero si hay otros archivos personales:
+notas-personales/
