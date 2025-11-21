@@ -27,10 +27,9 @@ Sistema para administrar y analizar resúmenes de artículos científicos. Permi
 ## Plan de Desarrollo
 
 ### Fase 1: Estructuras de Datos Base
-- [ ] HashTable genérica con función hash personalizada
-- [ ] AVLTree genérica con rotaciones
-- [ ] LinkedList para manejar colisiones
-- [ ] Tests unitarios
+- [x] HashTable genérica con función hash personalizada
+- [x] AVLTree genérica con rotaciones
+- [x] LinkedList para manejar colisiones
 
 ### Fase 2: Modelos + Persistencia
 - [ ] Clase Resumen
@@ -62,14 +61,3 @@ Sistema para administrar y analizar resúmenes de artículos científicos. Permi
 - [ ] Tests de integración
 
 ---
-
-## Notas de Desarrollo
-
-### 2024-11-18 - Inicio del proyecto
-- Proyecto creado en NetBeans
-- Arquitectura definida en 6 capas
-- Plan de desarrollo establecido
-
----
-
-*Ir agregando notas conforme se desarrolla*

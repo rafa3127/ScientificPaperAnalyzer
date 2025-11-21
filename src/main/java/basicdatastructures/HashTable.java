@@ -42,18 +42,37 @@ public class HashTable<K,V> {
     
     /**
      * Calculates the bucket index for a given key using a specific capacity.
-     * Handles negative hash codes by converting them to positive values.
+     * Uses the FNV-1a (Fowler-Noll-Vo) hash algorithm, which provides excellent
+     * distribution and avalanche effect properties.
+     * 
+     * The FNV-1a algorithm:
+     * 1. Starts with FNV offset basis (2166136261 for 32-bit)
+     * 2. For each byte: XOR with byte, then multiply by FNV prime (16777619)
+     * 3. This creates good avalanche effect where small input changes cause large output changes
      * 
      * @param key The key to hash
      * @param capacity The capacity to use for calculating the index
-     * @return The bucket index where the key should be stored
+     * @return The bucket index where the key should be stored (range: 0 to capacity-1)
      */
     private int hash(K key, int capacity) {
-        int hashNumber = key.hashCode();
-        if(hashNumber < 0) {
-            hashNumber = 0 - hashNumber;
+        if (key == null) {
+            return 0;
         }
-        return hashNumber % capacity;
+        
+        String keyStr = key.toString();
+        
+        // FNV-1a algorithm
+        int hash = 0x811c9dc5; // FNV offset basis (2166136261 in decimal)
+        int fnvPrime = 0x01000193; // FNV prime (16777619 in decimal)
+        
+        for (int i = 0; i < keyStr.length(); i++) {
+            hash ^= keyStr.charAt(i); // XOR with character
+            hash *= fnvPrime;          // Multiply by FNV prime
+        }
+        
+        // Ensure positive value and map to capacity range
+        hash = Math.abs(hash);
+        return hash % capacity;
     }
 
     /**
