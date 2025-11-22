@@ -93,10 +93,5 @@ gradle-app.setting
 !gradle-wrapper.jar
 .gradletasknamecache
 
-# Serialized data files (opcional, descomentar si no quieres versionar datos)
-# data/system/*.dat
-# data/system/*.ser
-
-# Personal notes (ya que están fuera del repo)
-# DESARROLLO.md está versionado, pero si hay otros archivos personales:
-notas-personales/
+# Serialized data files 
+/data
