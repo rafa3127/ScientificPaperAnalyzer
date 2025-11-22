@@ -32,15 +32,15 @@ Sistema para administrar y analizar resúmenes de artículos científicos. Permi
 - [x] LinkedList para manejar colisiones
 
 ### Fase 2: Modelos + Persistencia
-- [ ] Clase Resumen
-- [ ] Parser para leer archivos .txt
-- [ ] FileManager para guardar/cargar datos
-- [ ] Archivos de ejemplo
+- [x] Clase Resumen
+- [x] Parser para leer archivos .txt
+- [x] FileManager para guardar/cargar datos
+- [x] Archivos de ejemplo
 
 ### Fase 3: Repositorios
-- [ ] ResumenRepository (usa HashTable)
-- [ ] PalabraClaveRepository (usa AVL + HashTable inversa)
-- [ ] AutorRepository (usa AVL)
+- [x] hashmap para Resumenes
+- [x] AVL para Autores
+- [x] AVL para palabras claves
 
 ### Fase 4: Servicios
 - [ ] ResumenService (agregar, validar)
