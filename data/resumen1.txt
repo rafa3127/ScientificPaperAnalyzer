@@ -1,0 +1,6 @@
+Interacción inalámbrica con dispositivos de bajo costo para pantallas horizontales
+Autores
+Rhadamés Carmona
+Resumen
+El Centro de Computación Gráfica de la UCV cuenta con una mesa interactiva que permite la interacción de múltiples usuarios simultáneamente. En esta investigación se desarrolla un sistema de rastreo de cabeza que permite controlar un cursor en una pantalla de proyección con el movimiento de cabeza del usuario. El sistema emplea cámaras de bajo costo y procesamiento de imágenes para su posterior uso en aplicaciones que requieran de la interacción con la pantalla de proyección.
+Palabras claves: rastreo de cabeza, interacción humano-computador, realidad virtual

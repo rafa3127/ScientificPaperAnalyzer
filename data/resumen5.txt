@@ -1,0 +1,6 @@
+Optimización de consultas en bases de datos distribuidas mediante índices adaptativos
+Autores
+Roberto Sánchez, Julia Morales, Diego Ramírez
+Resumen
+Las bases de datos distribuidas enfrentan desafíos únicos en términos de rendimiento y consistencia. Este trabajo propone un sistema de índices adaptativos que se ajustan dinámicamente según los patrones de consulta observados. El sistema monitorea las consultas más frecuentes y reorganiza los índices para optimizar los tiempos de respuesta. Implementamos nuestro enfoque en un cluster de servidores y comparamos el rendimiento contra sistemas de indexación tradicionales. Los resultados demuestran una reducción del 40 por ciento en el tiempo promedio de respuesta para consultas complejas que involucran múltiples tablas distribuidas.
+Palabras claves: bases de datos, distribución, índices, optimización, rendimiento

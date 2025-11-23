@@ -52,13 +52,13 @@ Sistema para administrar y analizar resúmenes de artículos científicos. Permi
 - [x] MainFrame
 - [x] Panel de Agregar Resumen
 - [x] Panel de Analizar Resumen
-- [ ] Panel de Buscar Keyword
-- [ ] Panel de Buscar Autor
-- [ ] Panel de Listar Keyword
+- [x] Panel de Buscar Keyword
+- [x] Panel de Buscar Autor
+- [x] Panel de Listar Keyword
 
 ### Fase 6: Documentación
-- [ ] Javadoc completo
-- [ ] Diagrama UML
+- [x] Javadoc completo
+- [x] Diagrama UML
 - [ ] README.md
 
 ---

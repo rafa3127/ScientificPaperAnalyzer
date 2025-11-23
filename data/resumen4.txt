@@ -1,0 +1,6 @@
+Sistema de recomendación de artículos científicos basado en aprendizaje automático
+Autores
+Laura Fernández, Miguel Ángel Torres
+Resumen
+La cantidad de publicaciones científicas crece exponencialmente, dificultando que los investigadores encuentren trabajos relevantes para sus áreas de interés. Este artículo presenta un sistema de recomendación que utiliza técnicas de procesamiento de lenguaje natural y aprendizaje automático para sugerir artículos personalizados. El sistema analiza el historial de lectura del usuario, extrae palabras clave de los documentos y emplea algoritmos de filtrado colaborativo para generar recomendaciones precisas. Las pruebas con usuarios reales muestran una tasa de satisfacción del 85 por ciento.
+Palabras claves: aprendizaje automático, recomendación, procesamiento de lenguaje natural, artículos científicos

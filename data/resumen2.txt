@@ -1,0 +1,6 @@
+Desarrollo de una herramienta interactiva para la enseñanza de algoritmos de ordenamiento
+Autores
+María García, Pedro Martínez, Ana López
+Resumen
+Este proyecto presenta el desarrollo de una herramienta educativa interactiva diseñada para facilitar el aprendizaje de algoritmos de ordenamiento en estudiantes de ciencias de la computación. La herramienta permite visualizar paso a paso la ejecución de algoritmos como bubble sort, quick sort y merge sort. Los usuarios pueden ajustar la velocidad de ejecución y observar cómo los datos se reorganizan en tiempo real, mejorando así la comprensión de estos conceptos fundamentales.
+Palabras claves: algoritmos, ordenamiento, educación, visualización, programación

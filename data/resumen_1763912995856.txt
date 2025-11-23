@@ -1,0 +1,7 @@
+Detección de anomalías en redes de sensores IoT mediante análisis de series temporales
+Autores
+Andrea Vega
+Ana López
+Resumen
+El Internet de las Cosas ha experimentado un crecimiento masivo en los últimos años, generando grandes volúmenes de datos de sensores que deben ser monitoreados continuamente. Este estudio presenta un sistema de detección de anomalías que emplea técnicas de análisis de series temporales para identificar comportamientos inusuales en redes de sensores IoT. El sistema utiliza modelos estadísticos y algoritmos de machine learning para distinguir entre variaciones normales y anomalías genuinas que podrían indicar fallos de hardware o ataques de seguridad. Las pruebas en un entorno real con 500 sensores demuestran una precisión del 92 por ciento en la detección de anomalías con menos del 5 por ciento de falsos positivos.
+Palabras claves: IoT, sensores, anomalías, series temporales, machine learning
