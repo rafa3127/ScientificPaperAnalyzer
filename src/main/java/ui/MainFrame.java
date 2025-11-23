@@ -1,0 +1,1562 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
+ */
+package ui;
+import services.SummaryService;
+import services.AnalysisService;
+import services.SearchService;
+import services.KeywordService;
+import basicdatastructures.LinkedList;
+import basicdatastructures.Node;
+import basicdatastructures.HashTable;
+
+
+/**
+ *
+ * @author rafaelc3127
+ */
+public class MainFrame extends javax.swing.JFrame {
+    
+    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(MainFrame.class.getName());
+    
+    private SummaryService summaryService;
+    private AnalysisService analysisService;
+    private SearchService searchService;
+    private KeywordService keywordService;
+
+    /**
+     * Creates new form MainFrame
+     */
+    public MainFrame(
+            SummaryService summaryService,
+            AnalysisService analysisService,
+            SearchService searchService,
+            KeywordService keywordService
+    ) {
+        initComponents();
+        searchKeywordResultsTable.setEnabled(true);
+        searchKeywordResultsTable.setDefaultEditor(Object.class, null);
+        searchAuthorResultsTable.setEnabled(true);
+        searchAuthorResultsTable.setDefaultEditor(Object.class, null);
+        listKeywordTable.setEnabled(true);
+        listKeywordTable.setDefaultEditor(Object.class, null);
+        
+        
+        this.summaryService = summaryService;
+        this.analysisService = analysisService;
+        this.searchService = searchService;
+        this.keywordService = keywordService;
+        
+        jTabbedPane1.addChangeListener(e -> {
+            int selectedIndex = jTabbedPane1.getSelectedIndex();
+            
+            if (selectedIndex == 1) {
+                loadAnalyzeTitles();
+            }
+            
+            else if (selectedIndex == 2) {
+                loadSearchKeywords();
+            }
+            
+            else if (selectedIndex == 3) {
+               loadSearchAuthors();
+            }
+            else if (selectedIndex == 4) {
+                loadListKeywords();
+            }
+        });
+        setupSearchAuthorTableListener();
+        setupSearchKeywordTableListener();
+        setupListKeywordTableListener();
+    }
+    
+    /**
+     * Resets the Add Summary panel to its initial state
+     */
+    private void resetAddSummaryPanel() {
+        // Clear preview text
+        addSummaryPreviewTextArea.setText("");
+        
+        // Hide preview components
+        addSummaryPreviewTitleLabel.setVisible(false);
+        addSummaryPreviewTextArea.setVisible(false);
+        addSummaryConfirmButton.setVisible(false);
+        addSummaryConfirmButton.setEnabled(false);
+        
+        // Clear stored filepath
+        addSummaryConfirmButton.putClientProperty("selectedFilePath", null);
+    }
+    
+    /**
+     * Loads all summary titles into the ComboBox when the Analyze tab is activated
+     */
+    private void loadAnalyzeTitles() {
+        try {
+            analyzeTitlesComboBox.removeAllItems();
+            analyzeTitlesComboBox.addItem("-- Seleccione un resumen --");
+            
+            LinkedList<String> titles = summaryService.getAllTitlesSorted();
+            
+            if (titles.isEmpty()) {
+                analyzeTitlesComboBox.addItem("(No hay resúmenes disponibles)");
+                return;
+            }
+            
+            basicdatastructures.Node<String> current = titles.getHead();
+            while (current != null) {
+                analyzeTitlesComboBox.addItem(current.getData());
+                current = current.getNext();
+            }
+            
+            // Select the placeholder by default
+            analyzeTitlesComboBox.setSelectedIndex(0);
+            
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Error al cargar la lista de resúmenes:\n" + e.getMessage(),
+                "Error",
+                javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+            logger.log(java.util.logging.Level.SEVERE, "Error loading titles", e);
+        }
+    }
+    
+    /**
+     * Loads all keywords into the ComboBox when the Search Keyword tab is activated
+     */
+    private void loadSearchKeywords() {
+        try {
+            searchKeywordsComboBox.removeAllItems();
+            searchKeywordsComboBox.addItem("-- Seleccione una palabra clave --");
+            
+            basicdatastructures.LinkedList<String> keywords = keywordService.getAllKeywordsSorted();
+            
+            if (keywords.isEmpty()) {
+                searchKeywordsComboBox.addItem("(No hay palabras clave disponibles)");
+                return;
+            }
+            
+            basicdatastructures.Node<String> current = keywords.getHead();
+            while (current != null) {
+                searchKeywordsComboBox.addItem(current.getData());
+                current = current.getNext();
+            }
+            
+            // Select the placeholder by default
+            searchKeywordsComboBox.setSelectedIndex(0);
+            
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Error al cargar la lista de palabras clave:\n" + e.getMessage(),
+                "Error",
+                javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+            logger.log(java.util.logging.Level.SEVERE, "Error loading keywords", e);
+        }
+    }
+    
+    /**
+     * Loads all authors into the ComboBox when the Search Author tab is activated
+     */
+    private void loadSearchAuthors() {
+        try {
+            searchAuthorComboBox.removeAllItems();
+            searchAuthorComboBox.addItem("-- Seleccione un autor --");
+            
+            basicdatastructures.LinkedList<String> authors = searchService.getAllAuthorsSorted();
+            
+            if (authors.isEmpty()) {
+                searchAuthorComboBox.addItem("(No hay autores disponibles)");
+                return;
+            }
+            
+            basicdatastructures.Node<String> current = authors.getHead();
+            while (current != null) {
+                searchAuthorComboBox.addItem(current.getData());
+                current = current.getNext();
+            }
+            
+            // Select the placeholder by default
+            searchAuthorComboBox.setSelectedIndex(0);
+            
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Error al cargar la lista de autores:\n" + e.getMessage(),
+                "Error",
+                javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+            logger.log(java.util.logging.Level.SEVERE, "Error loading authors", e);
+        }
+    }
+    
+    /**
+     * Loads all keywords with their frequencies when the List Keywords tab is activated
+     */
+    private void loadListKeywords() {
+        try {
+            // Clear table
+            javax.swing.table.DefaultTableModel model = 
+                (javax.swing.table.DefaultTableModel) listKeywordTable.getModel();
+            model.setRowCount(0);
+            
+            // Get all keywords sorted
+            basicdatastructures.LinkedList<String> keywords = keywordService.getAllKeywordsSorted();
+            
+            if (keywords.isEmpty()) {
+                listKeywordTitleLabel1.setText("📊 Palabras Clave del Sistema: (0)");
+                return;
+            }
+            
+            // Count keywords
+            int count = 0;
+            basicdatastructures.Node<String> current = keywords.getHead();
+            while (current != null) {
+                count++;
+                current = current.getNext();
+            }
+            
+            // Update counter label
+            listKeywordTitleLabel1.setText("📊 Palabras Clave del Sistema: (" + count + ")");
+            
+            // Fill table with keywords and their paper counts
+            current = keywords.getHead();
+            while (current != null) {
+                String keyword = current.getData();
+                
+                // Get details for this keyword to know how many papers
+                models.KeywordDetails details = keywordService.getKeywordDetails(keyword);
+                int paperCount = 0;
+                
+                if (details != null && details.getSummaries() != null) {
+                    basicdatastructures.Node<models.Summary> sumNode = details.getSummaries().getHead();
+                    while (sumNode != null) {
+                        paperCount++;
+                        sumNode = sumNode.getNext();
+                    }
+                }
+                
+                model.addRow(new Object[]{
+                    keyword,
+                    paperCount
+                });
+                
+                current = current.getNext();
+            }
+            
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Error al cargar las palabras clave:\n" + e.getMessage(),
+                "Error",
+                javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+            logger.log(java.util.logging.Level.SEVERE, "Error loading keywords list", e);
+        }
+    }
+    
+    /**
+     * Sets up the table click listener for viewing summary details
+     */
+    private void setupSearchKeywordTableListener() {
+        searchKeywordResultsTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (evt.getClickCount() == 2) { // Double click
+                    int row = searchKeywordResultsTable.getSelectedRow();
+                    if (row >= 0) {
+                        showSummaryDetailsFromSearch(row);
+                    }
+                }
+            }
+        });
+    }
+    
+    private void setupSearchAuthorTableListener() {
+        searchAuthorResultsTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                int row = searchAuthorResultsTable.getSelectedRow();
+                if (row >= 0) {
+                    showSummaryDetailsFromSearchAuthor(row);
+                }
+            }
+        });
+    }
+    
+    /**
+     * Shows details of a summary from author search results
+     */
+    private void showSummaryDetailsFromSearchAuthor(int rowIndex) {
+        try {
+            // Get the stored results
+            @SuppressWarnings("unchecked")
+            basicdatastructures.LinkedList<models.Summary> results = 
+                (basicdatastructures.LinkedList<models.Summary>) 
+                searchAuthorResultsTable.getClientProperty("searchResults");
+            
+            if (results == null) {
+                return;
+            }
+            
+            // Navigate to the summary at the specified index
+            basicdatastructures.Node<models.Summary> current = results.getHead();
+            int index = 0;
+            while (current != null && index < rowIndex) {
+                current = current.getNext();
+                index++;
+            }
+            
+            if (current == null) {
+                return;
+            }
+            
+            models.Summary summary = current.getData();
+            
+            // Build details text
+            StringBuilder details = new StringBuilder();
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append("📄 TÍTULO\n");
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append(summary.getTitle()).append("\n\n");
+            
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append("👥 AUTORES\n");
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            basicdatastructures.LinkedList<String> authors = summary.getAuthors();
+            basicdatastructures.Node<String> authorNode = authors.getHead();
+            int authorCount = 1;
+            while (authorNode != null) {
+                details.append(authorCount).append(". ").append(authorNode.getData()).append("\n");
+                authorNode = authorNode.getNext();
+                authorCount++;
+            }
+            details.append("\n");
+            
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append("🔑 PALABRAS CLAVE\n");
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            basicdatastructures.LinkedList<String> keywords = summary.getKeywords();
+            basicdatastructures.Node<String> keywordNode = keywords.getHead();
+            int keywordCount = 1;
+            while (keywordNode != null) {
+                details.append(keywordCount).append(". ").append(keywordNode.getData()).append("\n");
+                keywordNode = keywordNode.getNext();
+                keywordCount++;
+            }
+            details.append("\n");
+            
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append("📝 RESUMEN\n");
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append(summary.getBody());
+            
+            // Show in dialog
+            javax.swing.JTextArea textArea = new javax.swing.JTextArea(details.toString());
+            textArea.setEditable(false);
+            textArea.setLineWrap(true);
+            textArea.setWrapStyleWord(true);
+            textArea.setCaretPosition(0);
+            
+            javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(textArea);
+            scrollPane.setPreferredSize(new java.awt.Dimension(700, 500));
+            
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                scrollPane,
+                "Detalles del Resumen",
+                javax.swing.JOptionPane.INFORMATION_MESSAGE
+            );
+            
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Error al mostrar detalles:\n" + e.getMessage(),
+                "Error",
+                javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+            logger.log(java.util.logging.Level.SEVERE, "Error showing summary details", e);
+        }
+    }
+    
+    /**
+     * Shows details of a summary from search results
+     */
+    private void showSummaryDetailsFromSearch(int rowIndex) {
+        try {
+            // Get the stored results
+            @SuppressWarnings("unchecked")
+            basicdatastructures.LinkedList<models.Summary> results = 
+                (basicdatastructures.LinkedList<models.Summary>) 
+                searchKeywordResultsTable.getClientProperty("searchResults");
+            
+            if (results == null) {
+                return;
+            }
+            
+            // Navigate to the summary at the specified index
+            basicdatastructures.Node<models.Summary> current = results.getHead();
+            int index = 0;
+            while (current != null && index < rowIndex) {
+                current = current.getNext();
+                index++;
+            }
+            
+            if (current == null) {
+                return;
+            }
+            
+            models.Summary summary = current.getData();
+            
+            // Build details text
+            StringBuilder details = new StringBuilder();
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append("📄 TÍTULO\n");
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append(summary.getTitle()).append("\n\n");
+            
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append("👥 AUTORES\n");
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            basicdatastructures.LinkedList<String> authors = summary.getAuthors();
+            basicdatastructures.Node<String> authorNode = authors.getHead();
+            int authorCount = 1;
+            while (authorNode != null) {
+                details.append(authorCount).append(". ").append(authorNode.getData()).append("\n");
+                authorNode = authorNode.getNext();
+                authorCount++;
+            }
+            details.append("\n");
+            
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append("🔑 PALABRAS CLAVE\n");
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            basicdatastructures.LinkedList<String> keywords = summary.getKeywords();
+            basicdatastructures.Node<String> keywordNode = keywords.getHead();
+            int keywordCount = 1;
+            while (keywordNode != null) {
+                details.append(keywordCount).append(". ").append(keywordNode.getData()).append("\n");
+                keywordNode = keywordNode.getNext();
+                keywordCount++;
+            }
+            details.append("\n");
+            
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append("📝 RESUMEN\n");
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append(summary.getBody());
+            
+            // Show in dialog
+            javax.swing.JTextArea textArea = new javax.swing.JTextArea(details.toString());
+            textArea.setEditable(false);
+            textArea.setLineWrap(true);
+            textArea.setWrapStyleWord(true);
+            textArea.setCaretPosition(0);
+            
+            javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(textArea);
+            scrollPane.setPreferredSize(new java.awt.Dimension(700, 500));
+            
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                scrollPane,
+                "Detalles del Resumen",
+                javax.swing.JOptionPane.INFORMATION_MESSAGE
+            );
+            
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Error al mostrar detalles:\n" + e.getMessage(),
+                "Error",
+                javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+            logger.log(java.util.logging.Level.SEVERE, "Error showing summary details", e);
+        }
+    }
+    
+    /**
+     * Sets up the table click listener for viewing keyword details
+     */
+    private void setupListKeywordTableListener() {
+        listKeywordTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                int row = listKeywordTable.getSelectedRow();
+                if (row >= 0) {
+                    showKeywordDetails(row);
+                }
+            }
+        });
+    }
+    
+    /**
+     * Shows details of a selected keyword in a dialog
+     */
+    private void showKeywordDetails(int rowIndex) {
+        try {
+            // Get the keyword from the table
+            String keyword = (String) listKeywordTable.getValueAt(rowIndex, 0);
+            
+            if (keyword == null || keyword.isEmpty()) {
+                return;
+            }
+            
+            // Get keyword details
+            models.KeywordDetails details = keywordService.getKeywordDetails(keyword);
+            
+            if (details == null) {
+                javax.swing.JOptionPane.showMessageDialog(
+                    this,
+                    "No se encontraron detalles para la palabra clave: " + keyword,
+                    "Sin Información",
+                    javax.swing.JOptionPane.INFORMATION_MESSAGE
+                );
+                return;
+            }
+            
+            // Build details text
+            StringBuilder detailsText = new StringBuilder();
+            
+            detailsText.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            detailsText.append("🔑 PALABRA CLAVE\n");
+            detailsText.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            detailsText.append(details.getKeyword()).append("\n\n");
+            
+            detailsText.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            detailsText.append("📈 FRECUENCIA GLOBAL\n");
+            detailsText.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            detailsText.append("Esta palabra clave aparece en ");
+            detailsText.append(details.getFrequency());
+            detailsText.append(" investigación(es)\n\n");
+            
+            detailsText.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            detailsText.append("📚 INVESTIGACIONES QUE CONTIENEN ESTA PALABRA CLAVE\n");
+            detailsText.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            
+            basicdatastructures.LinkedList<models.Summary> summaries = details.getSummaries();
+            
+            if (summaries == null || summaries.isEmpty()) {
+                detailsText.append("No hay investigaciones asociadas.\n");
+            } else {
+                int index = 1;
+                basicdatastructures.Node<models.Summary> current = summaries.getHead();
+                while (current != null) {
+                    models.Summary summary = current.getData();
+                    detailsText.append(index).append(". ");
+                    detailsText.append(summary.getTitle()).append("\n");
+                    
+                    // Add authors
+                    detailsText.append("   Autores: ");
+                    basicdatastructures.LinkedList<String> authors = summary.getAuthors();
+                    basicdatastructures.Node<String> authorNode = authors.getHead();
+                    boolean first = true;
+                    while (authorNode != null) {
+                        if (!first) {
+                            detailsText.append(", ");
+                        }
+                        detailsText.append(authorNode.getData());
+                        first = false;
+                        authorNode = authorNode.getNext();
+                    }
+                    detailsText.append("\n\n");
+                    
+                    current = current.getNext();
+                    index++;
+                }
+            }
+            
+            // Show in dialog
+            javax.swing.JTextArea textArea = new javax.swing.JTextArea(detailsText.toString());
+            textArea.setEditable(false);
+            textArea.setLineWrap(true);
+            textArea.setWrapStyleWord(true);
+            textArea.setCaretPosition(0);
+            textArea.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 12));
+            
+            javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(textArea);
+            scrollPane.setPreferredSize(new java.awt.Dimension(700, 500));
+            
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                scrollPane,
+                "Detalles de Palabra Clave: " + keyword,
+                javax.swing.JOptionPane.INFORMATION_MESSAGE
+            );
+            
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Error al mostrar detalles:\n" + e.getMessage(),
+                "Error",
+                javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+            logger.log(java.util.logging.Level.SEVERE, "Error showing keyword details", e);
+        }
+    }
+
+    /**
+     * This method is called from within the constructor to initialize the form.
+     * WARNING: Do NOT modify this code. The content of this method is always
+     * regenerated by the Form Editor.
+     */
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+
+        headerPanel = new javax.swing.JPanel();
+        titleLabel = new javax.swing.JLabel();
+        jTabbedPane1 = new javax.swing.JTabbedPane();
+        addSummaryPanel = new javax.swing.JPanel();
+        addSummaryTitleLabel = new javax.swing.JLabel();
+        addSummarySelectFileButton = new javax.swing.JButton();
+        addSummarySeparator1 = new javax.swing.JSeparator();
+        addSummaryPreviewTitleLabel = new javax.swing.JLabel();
+        addSummaryPreviewTextScrollPane = new javax.swing.JScrollPane();
+        addSummaryPreviewTextArea = new javax.swing.JTextArea();
+        addSummaryConfirmButton = new javax.swing.JButton();
+        analyzeSummaryPanel = new javax.swing.JPanel();
+        analyzeSummaryTitleLabel = new javax.swing.JLabel();
+        analyzeTitlesComboBox = new javax.swing.JComboBox<>();
+        AnalyzeButton = new javax.swing.JButton();
+        separator2 = new javax.swing.JSeparator();
+        analyzeSummaryTitleLabel1 = new javax.swing.JLabel();
+        analyzeScrollPaneDetails = new javax.swing.JScrollPane();
+        analyzeDetailsTextArea = new javax.swing.JTextArea();
+        searchKeywordPanel = new javax.swing.JPanel();
+        searchKeywordTitleLabel = new javax.swing.JLabel();
+        searchKeywordsComboBox = new javax.swing.JComboBox<>();
+        searchKeywordButton = new javax.swing.JButton();
+        separator3 = new javax.swing.JSeparator();
+        searchKeywordResultsLabel = new javax.swing.JLabel();
+        searchKeywordResultsScrollPane = new javax.swing.JScrollPane();
+        searchKeywordResultsTable = new javax.swing.JTable();
+        searchAuthorPanel = new javax.swing.JPanel();
+        searchAuthorTitleLabel = new javax.swing.JLabel();
+        searchAuthorComboBox = new javax.swing.JComboBox<>();
+        searchAuthorButton = new javax.swing.JButton();
+        separator4 = new javax.swing.JSeparator();
+        searchAuthorResultsLabel = new javax.swing.JLabel();
+        searchAuthorResultsScrollPane = new javax.swing.JScrollPane();
+        searchAuthorResultsTable = new javax.swing.JTable();
+        listKeywordPanel = new javax.swing.JPanel();
+        listKeywordTitleLabel = new javax.swing.JLabel();
+        listKeywordTitleLabel1 = new javax.swing.JLabel();
+        listKeywordScrollPane = new javax.swing.JScrollPane();
+        listKeywordTable = new javax.swing.JTable();
+        jLabel1 = new javax.swing.JLabel();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Sistema de Gestión de Artículos Científicos");
+        setBackground(new java.awt.Color(255, 255, 255));
+        setPreferredSize(new java.awt.Dimension(1400, 700));
+
+        headerPanel.setBackground(new java.awt.Color(102, 126, 234));
+        headerPanel.setPreferredSize(new java.awt.Dimension(1600, 40));
+
+        titleLabel.setFont(new java.awt.Font("Helvetica Neue", 1, 24)); // NOI18N
+        titleLabel.setForeground(new java.awt.Color(255, 255, 255));
+        titleLabel.setText("📚 Sistema de Gestión de Artículos Científicos");
+        titleLabel.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        headerPanel.add(titleLabel);
+
+        jTabbedPane1.setBackground(new java.awt.Color(255, 255, 255));
+
+        addSummaryPanel.setBackground(new java.awt.Color(255, 255, 255));
+
+        addSummaryTitleLabel.setFont(new java.awt.Font("Helvetica Neue", 1, 18)); // NOI18N
+        addSummaryTitleLabel.setForeground(new java.awt.Color(51, 51, 51));
+        addSummaryTitleLabel.setText("Agregar Resumen");
+
+        addSummarySelectFileButton.setBackground(new java.awt.Color(220, 220, 220));
+        addSummarySelectFileButton.setFont(new java.awt.Font("Helvetica Neue", 1, 14)); // NOI18N
+        addSummarySelectFileButton.setText("📂 Seleccionar Archivo .txt");
+        addSummarySelectFileButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addSummarySelectFileButtonActionPerformed(evt);
+            }
+        });
+
+        addSummaryPreviewTitleLabel.setFont(new java.awt.Font("Helvetica Neue", 1, 14)); // NOI18N
+        addSummaryPreviewTitleLabel.setForeground(new java.awt.Color(51, 51, 51));
+        addSummaryPreviewTitleLabel.setText("📋 Vista Previa del Resumen:");
+
+        addSummaryPreviewTextArea.setEditable(false);
+        addSummaryPreviewTextArea.setBackground(new java.awt.Color(255, 255, 255));
+        addSummaryPreviewTextArea.setColumns(50);
+        addSummaryPreviewTextArea.setLineWrap(true);
+        addSummaryPreviewTextArea.setRows(12);
+        addSummaryPreviewTextArea.setWrapStyleWord(true);
+        addSummaryPreviewTextScrollPane.setViewportView(addSummaryPreviewTextArea);
+
+        addSummaryConfirmButton.setBackground(new java.awt.Color(102, 126, 234));
+        addSummaryConfirmButton.setFont(new java.awt.Font("Helvetica Neue", 1, 14)); // NOI18N
+        addSummaryConfirmButton.setForeground(new java.awt.Color(102, 126, 234));
+        addSummaryConfirmButton.setText("✅ Confirmar y Agregar");
+        addSummaryConfirmButton.setEnabled(false);
+        addSummaryConfirmButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addSummaryConfirmButtonActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout addSummaryPanelLayout = new javax.swing.GroupLayout(addSummaryPanel);
+        addSummaryPanel.setLayout(addSummaryPanelLayout);
+        addSummaryPanelLayout.setHorizontalGroup(
+            addSummaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(addSummaryPanelLayout.createSequentialGroup()
+                .addGap(54, 54, 54)
+                .addGroup(addSummaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(addSummaryConfirmButton)
+                    .addGroup(addSummaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(addSummaryPreviewTitleLabel)
+                        .addComponent(addSummarySelectFileButton)
+                        .addComponent(addSummaryTitleLabel)
+                        .addComponent(addSummarySeparator1)
+                        .addComponent(addSummaryPreviewTextScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 603, Short.MAX_VALUE)))
+                .addContainerGap(931, Short.MAX_VALUE))
+        );
+        addSummaryPanelLayout.setVerticalGroup(
+            addSummaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(addSummaryPanelLayout.createSequentialGroup()
+                .addGap(24, 24, 24)
+                .addComponent(addSummaryTitleLabel)
+                .addGap(18, 18, 18)
+                .addComponent(addSummarySelectFileButton)
+                .addGap(27, 27, 27)
+                .addComponent(addSummarySeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(addSummaryPreviewTitleLabel)
+                .addGap(26, 26, 26)
+                .addComponent(addSummaryPreviewTextScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(34, 34, 34)
+                .addComponent(addSummaryConfirmButton)
+                .addContainerGap(186, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("➕ Agregar Resumen", addSummaryPanel);
+
+        analyzeSummaryPanel.setBackground(new java.awt.Color(255, 255, 255));
+
+        analyzeSummaryTitleLabel.setFont(new java.awt.Font("Helvetica Neue", 1, 18)); // NOI18N
+        analyzeSummaryTitleLabel.setForeground(new java.awt.Color(51, 51, 51));
+        analyzeSummaryTitleLabel.setText("Detalles del Resumen");
+
+        analyzeTitlesComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        AnalyzeButton.setFont(new java.awt.Font("Helvetica Neue", 0, 14)); // NOI18N
+        AnalyzeButton.setForeground(new java.awt.Color(102, 126, 234));
+        AnalyzeButton.setText("🔍 Analizar Resumen");
+        AnalyzeButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                AnalyzeButtonActionPerformed(evt);
+            }
+        });
+
+        analyzeSummaryTitleLabel1.setFont(new java.awt.Font("Helvetica Neue", 1, 18)); // NOI18N
+        analyzeSummaryTitleLabel1.setForeground(new java.awt.Color(51, 51, 51));
+        analyzeSummaryTitleLabel1.setText("Analizar Resumen");
+
+        analyzeDetailsTextArea.setEditable(false);
+        analyzeDetailsTextArea.setBackground(new java.awt.Color(255, 255, 255));
+        analyzeDetailsTextArea.setColumns(20);
+        analyzeDetailsTextArea.setLineWrap(true);
+        analyzeDetailsTextArea.setRows(5);
+        analyzeDetailsTextArea.setWrapStyleWord(true);
+        analyzeDetailsTextArea.setEnabled(false);
+        analyzeScrollPaneDetails.setViewportView(analyzeDetailsTextArea);
+
+        javax.swing.GroupLayout analyzeSummaryPanelLayout = new javax.swing.GroupLayout(analyzeSummaryPanel);
+        analyzeSummaryPanel.setLayout(analyzeSummaryPanelLayout);
+        analyzeSummaryPanelLayout.setHorizontalGroup(
+            analyzeSummaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(analyzeSummaryPanelLayout.createSequentialGroup()
+                .addGap(59, 59, 59)
+                .addGroup(analyzeSummaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(analyzeSummaryPanelLayout.createSequentialGroup()
+                        .addComponent(analyzeSummaryTitleLabel1)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(separator2)
+                    .addGroup(analyzeSummaryPanelLayout.createSequentialGroup()
+                        .addGroup(analyzeSummaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(analyzeSummaryTitleLabel)
+                            .addComponent(AnalyzeButton)
+                            .addComponent(analyzeTitlesComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 502, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(analyzeScrollPaneDetails, javax.swing.GroupLayout.PREFERRED_SIZE, 796, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap(733, Short.MAX_VALUE))))
+        );
+        analyzeSummaryPanelLayout.setVerticalGroup(
+            analyzeSummaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(analyzeSummaryPanelLayout.createSequentialGroup()
+                .addGap(40, 40, 40)
+                .addComponent(analyzeSummaryTitleLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(analyzeTitlesComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(AnalyzeButton)
+                .addGap(18, 18, 18)
+                .addComponent(separator2, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(analyzeSummaryTitleLabel)
+                .addGap(18, 18, 18)
+                .addComponent(analyzeScrollPaneDetails, javax.swing.GroupLayout.PREFERRED_SIZE, 273, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(136, Short.MAX_VALUE))
+        );
+
+        jTabbedPane1.addTab("📊 Analizar Resumen", analyzeSummaryPanel);
+
+        searchKeywordPanel.setBackground(new java.awt.Color(255, 255, 255));
+
+        searchKeywordTitleLabel.setFont(new java.awt.Font("Helvetica Neue", 1, 18)); // NOI18N
+        searchKeywordTitleLabel.setForeground(new java.awt.Color(51, 51, 51));
+        searchKeywordTitleLabel.setText("Buscar por Palabra clave");
+
+        searchKeywordsComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        searchKeywordButton.setFont(new java.awt.Font("Helvetica Neue", 0, 14)); // NOI18N
+        searchKeywordButton.setForeground(new java.awt.Color(102, 126, 234));
+        searchKeywordButton.setText("🔍Buscar Palabra Clave");
+        searchKeywordButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                searchKeywordButtonActionPerformed(evt);
+            }
+        });
+
+        searchKeywordResultsLabel.setFont(new java.awt.Font("Helvetica Neue", 1, 18)); // NOI18N
+        searchKeywordResultsLabel.setForeground(new java.awt.Color(51, 51, 51));
+        searchKeywordResultsLabel.setText("📋 Investigaciones Encontradas:");
+
+        searchKeywordResultsTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null},
+                {null, null},
+                {null, null},
+                {null, null}
+            },
+            new String [] {
+                "Título", "Acciones"
+            }
+        ));
+        searchKeywordResultsTable.setEnabled(false);
+        searchKeywordResultsScrollPane.setViewportView(searchKeywordResultsTable);
+        if (searchKeywordResultsTable.getColumnModel().getColumnCount() > 0) {
+            searchKeywordResultsTable.getColumnModel().getColumn(0).setMinWidth(500);
+            searchKeywordResultsTable.getColumnModel().getColumn(0).setPreferredWidth(500);
+            searchKeywordResultsTable.getColumnModel().getColumn(1).setPreferredWidth(100);
+            searchKeywordResultsTable.getColumnModel().getColumn(1).setMaxWidth(100);
+        }
+
+        javax.swing.GroupLayout searchKeywordPanelLayout = new javax.swing.GroupLayout(searchKeywordPanel);
+        searchKeywordPanel.setLayout(searchKeywordPanelLayout);
+        searchKeywordPanelLayout.setHorizontalGroup(
+            searchKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(searchKeywordPanelLayout.createSequentialGroup()
+                .addGap(54, 54, 54)
+                .addGroup(searchKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(searchKeywordResultsLabel)
+                    .addComponent(separator3, javax.swing.GroupLayout.PREFERRED_SIZE, 1061, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(searchKeywordButton)
+                    .addComponent(searchKeywordsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 502, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(searchKeywordTitleLabel)
+                    .addComponent(searchKeywordResultsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 709, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(473, Short.MAX_VALUE))
+        );
+        searchKeywordPanelLayout.setVerticalGroup(
+            searchKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(searchKeywordPanelLayout.createSequentialGroup()
+                .addGap(40, 40, 40)
+                .addComponent(searchKeywordTitleLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(searchKeywordsComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(searchKeywordButton)
+                .addGap(32, 32, 32)
+                .addComponent(separator3, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(searchKeywordResultsLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(searchKeywordResultsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 276, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(151, 151, 151))
+        );
+
+        jTabbedPane1.addTab("🔍 Buscar Keyword", searchKeywordPanel);
+
+        searchAuthorPanel.setBackground(new java.awt.Color(255, 255, 255));
+
+        searchAuthorTitleLabel.setFont(new java.awt.Font("Helvetica Neue", 1, 18)); // NOI18N
+        searchAuthorTitleLabel.setForeground(new java.awt.Color(51, 51, 51));
+        searchAuthorTitleLabel.setText("Buscar por Autor");
+
+        searchAuthorComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        searchAuthorButton.setFont(new java.awt.Font("Helvetica Neue", 0, 14)); // NOI18N
+        searchAuthorButton.setForeground(new java.awt.Color(102, 126, 234));
+        searchAuthorButton.setText("🔍Buscar Autor");
+        searchAuthorButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                searchAuthorButtonActionPerformed(evt);
+            }
+        });
+
+        searchAuthorResultsLabel.setFont(new java.awt.Font("Helvetica Neue", 1, 18)); // NOI18N
+        searchAuthorResultsLabel.setForeground(new java.awt.Color(51, 51, 51));
+        searchAuthorResultsLabel.setText("📋 Investigaciones Encontradas:");
+
+        searchAuthorResultsTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null},
+                {null, null},
+                {null, null},
+                {null, null}
+            },
+            new String [] {
+                "Título", "Acciones"
+            }
+        ));
+        searchAuthorResultsTable.setEnabled(false);
+        searchAuthorResultsScrollPane.setViewportView(searchAuthorResultsTable);
+        if (searchAuthorResultsTable.getColumnModel().getColumnCount() > 0) {
+            searchAuthorResultsTable.getColumnModel().getColumn(0).setMinWidth(500);
+            searchAuthorResultsTable.getColumnModel().getColumn(0).setPreferredWidth(500);
+            searchAuthorResultsTable.getColumnModel().getColumn(1).setPreferredWidth(100);
+            searchAuthorResultsTable.getColumnModel().getColumn(1).setMaxWidth(100);
+        }
+
+        javax.swing.GroupLayout searchAuthorPanelLayout = new javax.swing.GroupLayout(searchAuthorPanel);
+        searchAuthorPanel.setLayout(searchAuthorPanelLayout);
+        searchAuthorPanelLayout.setHorizontalGroup(
+            searchAuthorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(searchAuthorPanelLayout.createSequentialGroup()
+                .addGap(54, 54, 54)
+                .addGroup(searchAuthorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(searchAuthorResultsLabel)
+                    .addComponent(separator4, javax.swing.GroupLayout.PREFERRED_SIZE, 1061, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(searchAuthorButton)
+                    .addComponent(searchAuthorComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 502, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(searchAuthorTitleLabel)
+                    .addComponent(searchAuthorResultsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 709, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(473, Short.MAX_VALUE))
+        );
+        searchAuthorPanelLayout.setVerticalGroup(
+            searchAuthorPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(searchAuthorPanelLayout.createSequentialGroup()
+                .addGap(40, 40, 40)
+                .addComponent(searchAuthorTitleLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(searchAuthorComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(searchAuthorButton)
+                .addGap(32, 32, 32)
+                .addComponent(separator4, javax.swing.GroupLayout.PREFERRED_SIZE, 14, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(searchAuthorResultsLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(searchAuthorResultsScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 276, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(151, 151, 151))
+        );
+
+        jTabbedPane1.addTab("👤 Buscar Autor", searchAuthorPanel);
+
+        listKeywordPanel.setBackground(new java.awt.Color(255, 255, 255));
+
+        listKeywordTitleLabel.setFont(new java.awt.Font("Helvetica Neue", 1, 18)); // NOI18N
+        listKeywordTitleLabel.setForeground(new java.awt.Color(51, 51, 51));
+        listKeywordTitleLabel.setText("📊 Palabras Clave del Sistema: (0)");
+
+        listKeywordTitleLabel1.setFont(new java.awt.Font("Helvetica Neue", 1, 18)); // NOI18N
+        listKeywordTitleLabel1.setForeground(new java.awt.Color(51, 51, 51));
+        listKeywordTitleLabel1.setText("Lista de Palabras Clave");
+
+        listKeywordTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null},
+                {null},
+                {null},
+                {null}
+            },
+            new String [] {
+                "Palabra"
+            }
+        ));
+        listKeywordTable.setEnabled(false);
+        listKeywordScrollPane.setViewportView(listKeywordTable);
+
+        jLabel1.setText("💡 Haga click en una palabra clave para ver detalles y papers asociados    ");
+
+        javax.swing.GroupLayout listKeywordPanelLayout = new javax.swing.GroupLayout(listKeywordPanel);
+        listKeywordPanel.setLayout(listKeywordPanelLayout);
+        listKeywordPanelLayout.setHorizontalGroup(
+            listKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(listKeywordPanelLayout.createSequentialGroup()
+                .addGap(52, 52, 52)
+                .addGroup(listKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel1)
+                    .addComponent(listKeywordScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 255, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(listKeywordTitleLabel))
+                .addContainerGap(1090, Short.MAX_VALUE))
+            .addGroup(listKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(listKeywordPanelLayout.createSequentialGroup()
+                    .addGap(54, 54, 54)
+                    .addComponent(listKeywordTitleLabel1)
+                    .addContainerGap(1334, Short.MAX_VALUE)))
+        );
+        listKeywordPanelLayout.setVerticalGroup(
+            listKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(listKeywordPanelLayout.createSequentialGroup()
+                .addGap(115, 115, 115)
+                .addComponent(listKeywordTitleLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(listKeywordScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 269, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel1)
+                .addContainerGap(173, Short.MAX_VALUE))
+            .addGroup(listKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(listKeywordPanelLayout.createSequentialGroup()
+                    .addGap(45, 45, 45)
+                    .addComponent(listKeywordTitleLabel1)
+                    .addContainerGap(568, Short.MAX_VALUE)))
+        );
+
+        jTabbedPane1.addTab("📋 Listar Keywords", listKeywordPanel);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(headerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jTabbedPane1)
+                .addContainerGap())
+        );
+        layout.setVerticalGroup(
+            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(headerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jTabbedPane1))
+        );
+
+        pack();
+    }// </editor-fold>//GEN-END:initComponents
+
+    private void addSummarySelectFileButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addSummarySelectFileButtonActionPerformed
+       // Create file chooser with filter for .txt files
+       javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
+       fileChooser.setDialogTitle("Seleccionar Archivo de Resumen");
+       fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+           "Archivos de texto (.txt)", "txt"
+       ));
+       
+       // Set initial directory to data/resumenes if exists
+       java.io.File dataDir = new java.io.File("data/resumenes");
+       if (dataDir.exists()) {
+           fileChooser.setCurrentDirectory(dataDir);
+       }
+       
+       int result = fileChooser.showOpenDialog(this);
+       
+       if (result == javax.swing.JFileChooser.APPROVE_OPTION) {
+           java.io.File selectedFile = fileChooser.getSelectedFile();
+           String filepath = selectedFile.getAbsolutePath();
+           
+           try {
+               // Parse the file to get Summary details
+               models.Summary summary = io.SummaryParser.parseFromFile(filepath);
+               
+               // Check if summary already exists
+               if (summaryService.summaryExists(summary.getTitle())) {
+                   javax.swing.JOptionPane.showMessageDialog(
+                       this,
+                       "Este resumen ya existe en el sistema:\n\"" + summary.getTitle() + "\"",
+                       "Resumen Duplicado",
+                       javax.swing.JOptionPane.WARNING_MESSAGE
+                   );
+                   return;
+               }
+               
+               // Build preview text
+               StringBuilder preview = new StringBuilder();
+               preview.append("📄 TÍTULO:\n");
+               preview.append(summary.getTitle()).append("\n\n");
+               
+               preview.append("👥 AUTORES:\n");
+               LinkedList<String> authors = summary.getAuthors();
+               Node<String> authorNode = authors.getHead();
+               while (authorNode != null) {
+                   preview.append("  • ").append(authorNode.getData()).append("\n");
+                   authorNode = authorNode.getNext();
+               }
+               preview.append("\n");
+               
+               preview.append("🔑 PALABRAS CLAVE:\n");
+               LinkedList<String> keywords = summary.getKeywords();
+               Node<String> keywordNode = keywords.getHead();
+               while (keywordNode != null) {
+                   preview.append("  • ").append(keywordNode.getData()).append("\n");
+                   keywordNode = keywordNode.getNext();
+               }
+               preview.append("\n");
+               
+               preview.append("📝 RESUMEN:\n");
+               String body = summary.getBody();
+               String bodyPreview = body.length() > 300 
+                   ? body.substring(0, 300) + "..." 
+                   : body;
+               preview.append(bodyPreview);
+               
+               // Update UI - usando jTextArea1 que está dentro del scrollpane
+               addSummaryPreviewTextArea.setText(preview.toString());
+               addSummaryPreviewTextArea.setCaretPosition(0); // Scroll to top
+               
+               // Show preview components
+               addSummaryPreviewTitleLabel.setVisible(true);
+               addSummaryConfirmButton.setEnabled(true);
+               
+               // Store filepath in button's client property for later use
+               addSummaryConfirmButton.putClientProperty("selectedFilePath", filepath);
+               
+           } catch (java.io.IOException e) {
+               javax.swing.JOptionPane.showMessageDialog(
+                   this,
+                   "Error al leer el archivo:\n" + e.getMessage(),
+                   "Error de Lectura",
+                   javax.swing.JOptionPane.ERROR_MESSAGE
+               );
+               logger.log(java.util.logging.Level.SEVERE, "Error parsing summary file", e);
+           } catch (Exception e) {
+               javax.swing.JOptionPane.showMessageDialog(
+                   this,
+                   "Error al procesar el archivo:\n" + e.getMessage(),
+                   "Error",
+                   javax.swing.JOptionPane.ERROR_MESSAGE
+               );
+               logger.log(java.util.logging.Level.SEVERE, "Error processing summary", e);
+           }
+       } 
+    }//GEN-LAST:event_addSummarySelectFileButtonActionPerformed
+
+    private void addSummaryConfirmButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addSummaryConfirmButtonActionPerformed
+        // Get the stored filepath from button's client property
+        String filepath = (String) addSummaryConfirmButton.getClientProperty("selectedFilePath");
+        
+        if (filepath == null || filepath.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "No hay archivo seleccionado",
+                "Error",
+                javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+        
+        try {
+            // Add summary using the service
+            summaryService.addSummary(filepath);
+            
+            // Show success message
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "✅ Resumen agregado exitosamente al sistema",
+                "Éxito",
+                javax.swing.JOptionPane.INFORMATION_MESSAGE
+            );
+            
+            // Reset the panel
+            resetAddSummaryPanel();
+            
+        } catch (java.io.IOException e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Error al agregar el resumen:\n" + e.getMessage(),
+                "Error de I/O",
+                javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+            logger.log(java.util.logging.Level.SEVERE, "Error adding summary", e);
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Error inesperado:\n" + e.getMessage(),
+                "Error",
+                javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+            logger.log(java.util.logging.Level.SEVERE, "Unexpected error adding summary", e);
+        }  
+    }//GEN-LAST:event_addSummaryConfirmButtonActionPerformed
+
+    private void AnalyzeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AnalyzeButtonActionPerformed
+         // Validate selection
+        if (analyzeTitlesComboBox.getSelectedIndex() <= 0) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Por favor seleccione un resumen de la lista",
+                "Selección Requerida",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+        
+        String selectedTitle = (String) analyzeTitlesComboBox.getSelectedItem();
+        
+        // Check if it's a valid title (not the placeholder or empty message)
+        if (selectedTitle.startsWith("--") || selectedTitle.startsWith("(")) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Por favor seleccione un resumen válido",
+                "Selección Inválida",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+        
+        try {
+            // Get the summary
+            models.Summary summary = summaryService.getSummaryByTitle(selectedTitle);
+            
+            if (summary == null) {
+                javax.swing.JOptionPane.showMessageDialog(
+                    this,
+                    "No se encontró el resumen seleccionado",
+                    "Error",
+                    javax.swing.JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+            
+            // Analyze keyword frequencies
+            models.AnalysisResult analysis = analysisService.analyzeKeywordFrequencies(summary);
+            
+            // Build the details text
+            StringBuilder details = new StringBuilder();
+            
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append("📄 TÍTULO\n");
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append(analysis.getTitle()).append("\n\n");
+            
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append("👥 AUTORES\n");
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            LinkedList<String> authors = analysis.getAuthors();
+            Node<String> authorNode = authors.getHead();
+            int authorCount = 1;
+            while (authorNode != null) {
+                details.append(authorCount).append(". ").append(authorNode.getData()).append("\n");
+                authorNode = authorNode.getNext();
+                authorCount++;
+            }
+            details.append("\n");
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append("📝 RESUMEN\n");
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append(summary.getBody()).append("\n\n");
+            
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append("🔑 PALABRAS CLAVE DEL PAPER\n");
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            LinkedList<String> keywords = summary.getKeywords();
+            Node<String> keywordNode = keywords.getHead();
+            int keywordCount = 1;
+            while (keywordNode != null) {
+                details.append(keywordCount).append(". ").append(keywordNode.getData()).append("\n");
+                keywordNode = keywordNode.getNext();
+                keywordCount++;
+            }
+            details.append("\n");
+            
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append("📈 ANÁLISIS DE FRECUENCIAS DE PALABRAS CLAVE\n");
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            
+            HashTable<String, Integer> frequencies = analysis.getKeywordFrequencies();
+            
+            if (frequencies.isEmpty()) {
+                details.append("No se encontraron palabras clave en el texto.\n\n");
+            } else {
+                // Get all keyword-frequency pairs
+                LinkedList<String> keywordsList = frequencies.getKeys();
+                
+                // Calculate total occurrences for percentage
+                int totalOccurrences = 0;
+                Node<String> keyNode = keywordsList.getHead();
+                while (keyNode != null) {
+                    Integer freq = frequencies.get(keyNode.getData());
+                    totalOccurrences += freq;
+                    keyNode = keyNode.getNext();
+                }
+                
+                // Build sorted list of entries
+                java.util.List<java.util.Map.Entry<String, Integer>> sortedEntries = 
+                    new java.util.ArrayList<>();
+                
+                keyNode = keywordsList.getHead();
+                while (keyNode != null) {
+                    String keyword = keyNode.getData();
+                    Integer freq = frequencies.get(keyword);
+                    sortedEntries.add(new java.util.AbstractMap.SimpleEntry<>(keyword, freq));
+                    keyNode = keyNode.getNext();
+                }
+                
+                // Sort by frequency (descending)
+                sortedEntries.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+                
+                // Format as table
+                details.append(String.format("%-30s %12s %12s\n", "Palabra Clave", "Frecuencia", "Porcentaje"));
+                details.append("─────────────────────────────────────────────────────────\n");
+                
+                for (java.util.Map.Entry<String, Integer> entry : sortedEntries) {
+                    String keyword = entry.getKey();
+                    int freq = entry.getValue();
+                    double percentage = (totalOccurrences > 0) ? (freq * 100.0 / totalOccurrences) : 0;
+                    
+                    details.append(String.format("%-30s %12d %11.2f%%\n", 
+                        keyword, freq, percentage));
+                }
+                
+                details.append("\n");
+                details.append(String.format("Total de ocurrencias: %d\n", totalOccurrences));
+                details.append(String.format("Palabras clave únicas encontradas: %d\n", sortedEntries.size()));
+            }
+            
+            // Display in TextArea
+            analyzeDetailsTextArea.setText(details.toString());
+            analyzeDetailsTextArea.setCaretPosition(0); // Scroll to top
+            
+            // Show the details section
+            analyzeDetailsTextArea.setVisible(true);
+            
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Error al analizar el resumen:\n" + e.getMessage(),
+                "Error",
+                javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+            logger.log(java.util.logging.Level.SEVERE, "Error analyzing summary", e);
+        }
+    }//GEN-LAST:event_AnalyzeButtonActionPerformed
+
+    private void searchKeywordButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchKeywordButtonActionPerformed
+        // Validate selection
+        if (searchKeywordsComboBox.getSelectedIndex() <= 0) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Por favor seleccione una palabra clave de la lista",
+                "Selección Requerida",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+        
+        String selectedKeyword = (String) searchKeywordsComboBox.getSelectedItem();
+        
+        // Check if it's a valid keyword
+        if (selectedKeyword.startsWith("--") || selectedKeyword.startsWith("(")) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Por favor seleccione una palabra clave válida",
+                "Selección Inválida",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+        
+        try {
+            // Search for summaries with this keyword
+            basicdatastructures.LinkedList<models.Summary> results = 
+                searchService.searchByKeyword(selectedKeyword);
+            
+            if (results == null || results.isEmpty()) {
+                javax.swing.JOptionPane.showMessageDialog(
+                    this,
+                    "No se encontraron investigaciones con la palabra clave:\n\"" + selectedKeyword + "\"",
+                    "Sin Resultados",
+                    javax.swing.JOptionPane.INFORMATION_MESSAGE
+                );
+                
+                // Hide results section
+                searchKeywordResultsLabel.setVisible(false);
+                searchKeywordResultsScrollPane.setVisible(false);
+                return;
+            }
+            
+            // Count results
+            int count = 0;
+            basicdatastructures.Node<models.Summary> current = results.getHead();
+            while (current != null) {
+                count++;
+                current = current.getNext();
+            }
+            
+            // Update results label
+            searchKeywordResultsLabel.setText("📋 Investigaciones Encontradas: (" + count + ")");
+            
+            // Clear table
+            javax.swing.table.DefaultTableModel model = 
+                (javax.swing.table.DefaultTableModel) searchKeywordResultsTable.getModel();
+            model.setRowCount(0);
+            
+            // Fill table with results
+            current = results.getHead();
+            while (current != null) {
+                models.Summary summary = current.getData();
+                model.addRow(new Object[]{
+                    summary.getTitle(),
+                    "Ver Detalles"
+                });
+                current = current.getNext();
+            }
+            
+            // Show results section
+            searchKeywordResultsLabel.setVisible(true);
+            searchKeywordResultsScrollPane.setVisible(true);
+            
+            // Store results for later access
+            searchKeywordResultsTable.putClientProperty("searchResults", results);
+            
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Error al buscar investigaciones:\n" + e.getMessage(),
+                "Error",
+                javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+            logger.log(java.util.logging.Level.SEVERE, "Error searching by keyword", e);
+        }
+    }//GEN-LAST:event_searchKeywordButtonActionPerformed
+
+    private void searchAuthorButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchAuthorButtonActionPerformed
+        // Validate selection
+        if (searchAuthorComboBox.getSelectedIndex() <= 0) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Por favor seleccione un autor de la lista",
+                "Selección Requerida",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+        
+        String selectedAuthor = (String) searchAuthorComboBox.getSelectedItem();
+        
+        // Check if it's a valid author
+        if (selectedAuthor.startsWith("--") || selectedAuthor.startsWith("(")) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Por favor seleccione un autor válido",
+                "Selección Inválida",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+        
+        try {
+            // Search for summaries by this author
+            basicdatastructures.LinkedList<models.Summary> results = 
+                searchService.searchByAuthor(selectedAuthor);
+            
+            if (results == null || results.isEmpty()) {
+                javax.swing.JOptionPane.showMessageDialog(
+                    this,
+                    "No se encontraron investigaciones del autor:\n\"" + selectedAuthor + "\"",
+                    "Sin Resultados",
+                    javax.swing.JOptionPane.INFORMATION_MESSAGE
+                );
+                
+                // Hide results section
+                searchAuthorResultsLabel.setVisible(false);
+                searchAuthorResultsScrollPane.setVisible(false);
+                return;
+            }
+            
+            // Count results
+            int count = 0;
+            basicdatastructures.Node<models.Summary> current = results.getHead();
+            while (current != null) {
+                count++;
+                current = current.getNext();
+            }
+            
+            // Update results label
+            searchAuthorResultsLabel.setText("📋 Investigaciones Encontradas: (" + count + ")");
+            
+            // Clear table
+            javax.swing.table.DefaultTableModel model = 
+                (javax.swing.table.DefaultTableModel) searchAuthorResultsTable.getModel();
+            model.setRowCount(0);
+            
+            // Fill table with results
+            current = results.getHead();
+            while (current != null) {
+                models.Summary summary = current.getData();
+                model.addRow(new Object[]{
+                    summary.getTitle(),
+                    "Ver Detalles"
+                });
+                current = current.getNext();
+            }
+            
+            // Show results section
+            searchAuthorResultsLabel.setVisible(true);
+            searchAuthorResultsScrollPane.setVisible(true);
+            
+            // Store results for later access
+            searchAuthorResultsTable.putClientProperty("searchResults", results);
+            
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Error al buscar investigaciones:\n" + e.getMessage(),
+                "Error",
+                javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+            logger.log(java.util.logging.Level.SEVERE, "Error searching by author", e);
+        }
+    }//GEN-LAST:event_searchAuthorButtonActionPerformed
+
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton AnalyzeButton;
+    private javax.swing.JButton addSummaryConfirmButton;
+    private javax.swing.JPanel addSummaryPanel;
+    private javax.swing.JTextArea addSummaryPreviewTextArea;
+    private javax.swing.JScrollPane addSummaryPreviewTextScrollPane;
+    private javax.swing.JLabel addSummaryPreviewTitleLabel;
+    private javax.swing.JButton addSummarySelectFileButton;
+    private javax.swing.JSeparator addSummarySeparator1;
+    private javax.swing.JLabel addSummaryTitleLabel;
+    private javax.swing.JTextArea analyzeDetailsTextArea;
+    private javax.swing.JScrollPane analyzeScrollPaneDetails;
+    private javax.swing.JPanel analyzeSummaryPanel;
+    private javax.swing.JLabel analyzeSummaryTitleLabel;
+    private javax.swing.JLabel analyzeSummaryTitleLabel1;
+    private javax.swing.JComboBox<String> analyzeTitlesComboBox;
+    private javax.swing.JPanel headerPanel;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JTabbedPane jTabbedPane1;
+    private javax.swing.JPanel listKeywordPanel;
+    private javax.swing.JScrollPane listKeywordScrollPane;
+    private javax.swing.JTable listKeywordTable;
+    private javax.swing.JLabel listKeywordTitleLabel;
+    private javax.swing.JLabel listKeywordTitleLabel1;
+    private javax.swing.JButton searchAuthorButton;
+    private javax.swing.JComboBox<String> searchAuthorComboBox;
+    private javax.swing.JPanel searchAuthorPanel;
+    private javax.swing.JLabel searchAuthorResultsLabel;
+    private javax.swing.JScrollPane searchAuthorResultsScrollPane;
+    private javax.swing.JTable searchAuthorResultsTable;
+    private javax.swing.JLabel searchAuthorTitleLabel;
+    private javax.swing.JButton searchKeywordButton;
+    private javax.swing.JPanel searchKeywordPanel;
+    private javax.swing.JLabel searchKeywordResultsLabel;
+    private javax.swing.JScrollPane searchKeywordResultsScrollPane;
+    private javax.swing.JTable searchKeywordResultsTable;
+    private javax.swing.JLabel searchKeywordTitleLabel;
+    private javax.swing.JComboBox<String> searchKeywordsComboBox;
+    private javax.swing.JSeparator separator2;
+    private javax.swing.JSeparator separator3;
+    private javax.swing.JSeparator separator4;
+    private javax.swing.JLabel titleLabel;
+    // End of variables declaration//GEN-END:variables
+}

@@ -49,10 +49,12 @@ Sistema para administrar y analizar resúmenes de artículos científicos. Permi
 - [x] Servicio de análisis de resumenes
 
 ### Fase 5: UI
-- [ ] MainFrame
-- [ ] Paneles para cada funcionalidad
-- [ ] JFileChooser para cargar archivos
-- [ ] Dialogs para mostrar detalles
+- [x] MainFrame
+- [x] Panel de Agregar Resumen
+- [x] Panel de Analizar Resumen
+- [ ] Panel de Buscar Keyword
+- [ ] Panel de Buscar Autor
+- [ ] Panel de Listar Keyword
 
 ### Fase 6: Documentación
 - [ ] Javadoc completo
