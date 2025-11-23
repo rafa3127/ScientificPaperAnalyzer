@@ -51,7 +51,7 @@ Sistema para administrar y analizar resúmenes de artículos científicos. Permi
 ### Fase 5: UI
 - [x] MainFrame
 - [x] Panel de Agregar Resumen
-- [ ] Panel de Analizar Resumen
+- [x] Panel de Analizar Resumen
 - [ ] Panel de Buscar Keyword
 - [ ] Panel de Buscar Autor
 - [ ] Panel de Listar Keyword

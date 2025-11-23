@@ -7,6 +7,9 @@ import services.SummaryService;
 import services.AnalysisService;
 import services.SearchService;
 import services.KeywordService;
+import basicdatastructures.LinkedList;
+import basicdatastructures.Node;
+import basicdatastructures.HashTable;
 
 
 /**
@@ -37,6 +40,14 @@ public class MainFrame extends javax.swing.JFrame {
         this.analysisService = analysisService;
         this.searchService = searchService;
         this.keywordService = keywordService;
+        
+        jTabbedPane1.addChangeListener(e -> {
+            int selectedIndex = jTabbedPane1.getSelectedIndex();
+            
+            if (selectedIndex == 1) {
+                loadAnalyzeTitles();
+            }
+        });
     }
     
     /**
@@ -54,6 +65,41 @@ public class MainFrame extends javax.swing.JFrame {
         
         // Clear stored filepath
         addSummaryConfirmButton.putClientProperty("selectedFilePath", null);
+    }
+    
+    /**
+     * Loads all summary titles into the ComboBox when the Analyze tab is activated
+     */
+    private void loadAnalyzeTitles() {
+        try {
+            analyzeTitlesComboBox.removeAllItems();
+            analyzeTitlesComboBox.addItem("-- Seleccione un resumen --");
+            
+            LinkedList<String> titles = summaryService.getAllTitlesSorted();
+            
+            if (titles.isEmpty()) {
+                analyzeTitlesComboBox.addItem("(No hay resúmenes disponibles)");
+                return;
+            }
+            
+            basicdatastructures.Node<String> current = titles.getHead();
+            while (current != null) {
+                analyzeTitlesComboBox.addItem(current.getData());
+                current = current.getNext();
+            }
+            
+            // Select the placeholder by default
+            analyzeTitlesComboBox.setSelectedIndex(0);
+            
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Error al cargar la lista de resúmenes:\n" + e.getMessage(),
+                "Error",
+                javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+            logger.log(java.util.logging.Level.SEVERE, "Error loading titles", e);
+        }
     }
 
     /**
@@ -77,6 +123,13 @@ public class MainFrame extends javax.swing.JFrame {
         addSummaryPreviewTextArea = new javax.swing.JTextArea();
         addSummaryConfirmButton = new javax.swing.JButton();
         analyzeSummaryPanel = new javax.swing.JPanel();
+        analyzeSummaryTitleLabel = new javax.swing.JLabel();
+        analyzeTitlesComboBox = new javax.swing.JComboBox<>();
+        AnalyzeButton = new javax.swing.JButton();
+        separator2 = new javax.swing.JSeparator();
+        analyzeSummaryTitleLabel1 = new javax.swing.JLabel();
+        analyzeScrollPaneDetails = new javax.swing.JScrollPane();
+        analyzeDetailsTextArea = new javax.swing.JTextArea();
         searchKeywordPanel = new javax.swing.JPanel();
         searchAuthorPanel = new javax.swing.JPanel();
         listKeywordPanel = new javax.swing.JPanel();
@@ -84,6 +137,7 @@ public class MainFrame extends javax.swing.JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Sistema de Gestión de Artículos Científicos");
         setBackground(new java.awt.Color(255, 255, 255));
+        setPreferredSize(new java.awt.Dimension(1000, 700));
 
         headerPanel.setBackground(new java.awt.Color(102, 126, 234));
         headerPanel.setPreferredSize(new java.awt.Dimension(1600, 40));
@@ -123,6 +177,7 @@ public class MainFrame extends javax.swing.JFrame {
         addSummaryPreviewTextArea.setWrapStyleWord(true);
         addSummaryPreviewTextScrollPane.setViewportView(addSummaryPreviewTextArea);
 
+        addSummaryConfirmButton.setBackground(new java.awt.Color(102, 126, 234));
         addSummaryConfirmButton.setFont(new java.awt.Font("Helvetica Neue", 1, 14)); // NOI18N
         addSummaryConfirmButton.setForeground(new java.awt.Color(102, 126, 234));
         addSummaryConfirmButton.setText("✅ Confirmar y Agregar");
@@ -171,15 +226,69 @@ public class MainFrame extends javax.swing.JFrame {
 
         analyzeSummaryPanel.setBackground(new java.awt.Color(255, 255, 255));
 
+        analyzeSummaryTitleLabel.setFont(new java.awt.Font("Helvetica Neue", 1, 18)); // NOI18N
+        analyzeSummaryTitleLabel.setForeground(new java.awt.Color(51, 51, 51));
+        analyzeSummaryTitleLabel.setText("Detalles del Resumen");
+
+        analyzeTitlesComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        AnalyzeButton.setFont(new java.awt.Font("Helvetica Neue", 0, 14)); // NOI18N
+        AnalyzeButton.setForeground(new java.awt.Color(102, 126, 234));
+        AnalyzeButton.setText("🔍 Analizar Resumen");
+        AnalyzeButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                AnalyzeButtonActionPerformed(evt);
+            }
+        });
+
+        analyzeSummaryTitleLabel1.setFont(new java.awt.Font("Helvetica Neue", 1, 18)); // NOI18N
+        analyzeSummaryTitleLabel1.setForeground(new java.awt.Color(51, 51, 51));
+        analyzeSummaryTitleLabel1.setText("Analizar Resumen");
+
+        analyzeDetailsTextArea.setEditable(false);
+        analyzeDetailsTextArea.setBackground(new java.awt.Color(255, 255, 255));
+        analyzeDetailsTextArea.setColumns(20);
+        analyzeDetailsTextArea.setLineWrap(true);
+        analyzeDetailsTextArea.setRows(5);
+        analyzeDetailsTextArea.setWrapStyleWord(true);
+        analyzeDetailsTextArea.setEnabled(false);
+        analyzeScrollPaneDetails.setViewportView(analyzeDetailsTextArea);
+
         javax.swing.GroupLayout analyzeSummaryPanelLayout = new javax.swing.GroupLayout(analyzeSummaryPanel);
         analyzeSummaryPanel.setLayout(analyzeSummaryPanelLayout);
         analyzeSummaryPanelLayout.setHorizontalGroup(
             analyzeSummaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 1588, Short.MAX_VALUE)
+            .addGroup(analyzeSummaryPanelLayout.createSequentialGroup()
+                .addGap(59, 59, 59)
+                .addGroup(analyzeSummaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(analyzeSummaryPanelLayout.createSequentialGroup()
+                        .addComponent(analyzeSummaryTitleLabel1)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(separator2)
+                    .addGroup(analyzeSummaryPanelLayout.createSequentialGroup()
+                        .addGroup(analyzeSummaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(analyzeSummaryTitleLabel)
+                            .addComponent(AnalyzeButton)
+                            .addComponent(analyzeTitlesComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 502, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(analyzeScrollPaneDetails, javax.swing.GroupLayout.PREFERRED_SIZE, 796, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap(733, Short.MAX_VALUE))))
         );
         analyzeSummaryPanelLayout.setVerticalGroup(
             analyzeSummaryPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 619, Short.MAX_VALUE)
+            .addGroup(analyzeSummaryPanelLayout.createSequentialGroup()
+                .addGap(40, 40, 40)
+                .addComponent(analyzeSummaryTitleLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(analyzeTitlesComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(AnalyzeButton)
+                .addGap(18, 18, 18)
+                .addComponent(separator2, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(analyzeSummaryTitleLabel)
+                .addGap(18, 18, 18)
+                .addComponent(analyzeScrollPaneDetails, javax.swing.GroupLayout.PREFERRED_SIZE, 345, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(47, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("📊 Analizar Resumen", analyzeSummaryPanel);
@@ -291,8 +400,8 @@ public class MainFrame extends javax.swing.JFrame {
                preview.append(summary.getTitle()).append("\n\n");
                
                preview.append("👥 AUTORES:\n");
-               basicdatastructures.LinkedList<String> authors = summary.getAuthors();
-               basicdatastructures.Node<String> authorNode = authors.getHead();
+               LinkedList<String> authors = summary.getAuthors();
+               Node<String> authorNode = authors.getHead();
                while (authorNode != null) {
                    preview.append("  • ").append(authorNode.getData()).append("\n");
                    authorNode = authorNode.getNext();
@@ -300,8 +409,8 @@ public class MainFrame extends javax.swing.JFrame {
                preview.append("\n");
                
                preview.append("🔑 PALABRAS CLAVE:\n");
-               basicdatastructures.LinkedList<String> keywords = summary.getKeywords();
-               basicdatastructures.Node<String> keywordNode = keywords.getHead();
+               LinkedList<String> keywords = summary.getKeywords();
+               Node<String> keywordNode = keywords.getHead();
                while (keywordNode != null) {
                    preview.append("  • ").append(keywordNode.getData()).append("\n");
                    keywordNode = keywordNode.getNext();
@@ -391,10 +500,163 @@ public class MainFrame extends javax.swing.JFrame {
                 javax.swing.JOptionPane.ERROR_MESSAGE
             );
             logger.log(java.util.logging.Level.SEVERE, "Unexpected error adding summary", e);
-        }
+        }  
     }//GEN-LAST:event_addSummaryConfirmButtonActionPerformed
 
+    private void AnalyzeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AnalyzeButtonActionPerformed
+         // Validate selection
+        if (analyzeTitlesComboBox.getSelectedIndex() <= 0) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Por favor seleccione un resumen de la lista",
+                "Selección Requerida",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+        
+        String selectedTitle = (String) analyzeTitlesComboBox.getSelectedItem();
+        
+        // Check if it's a valid title (not the placeholder or empty message)
+        if (selectedTitle.startsWith("--") || selectedTitle.startsWith("(")) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Por favor seleccione un resumen válido",
+                "Selección Inválida",
+                javax.swing.JOptionPane.WARNING_MESSAGE
+            );
+            return;
+        }
+        
+        try {
+            // Get the summary
+            models.Summary summary = summaryService.getSummaryByTitle(selectedTitle);
+            
+            if (summary == null) {
+                javax.swing.JOptionPane.showMessageDialog(
+                    this,
+                    "No se encontró el resumen seleccionado",
+                    "Error",
+                    javax.swing.JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+            
+            // Analyze keyword frequencies
+            models.AnalysisResult analysis = analysisService.analyzeKeywordFrequencies(summary);
+            
+            // Build the details text
+            StringBuilder details = new StringBuilder();
+            
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append("📄 TÍTULO\n");
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append(analysis.getTitle()).append("\n\n");
+            
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append("👥 AUTORES\n");
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            LinkedList<String> authors = analysis.getAuthors();
+            Node<String> authorNode = authors.getHead();
+            int authorCount = 1;
+            while (authorNode != null) {
+                details.append(authorCount).append(". ").append(authorNode.getData()).append("\n");
+                authorNode = authorNode.getNext();
+                authorCount++;
+            }
+            details.append("\n");
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append("📝 RESUMEN\n");
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append(summary.getBody()).append("\n\n");
+            
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append("🔑 PALABRAS CLAVE DEL PAPER\n");
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            LinkedList<String> keywords = summary.getKeywords();
+            Node<String> keywordNode = keywords.getHead();
+            int keywordCount = 1;
+            while (keywordNode != null) {
+                details.append(keywordCount).append(". ").append(keywordNode.getData()).append("\n");
+                keywordNode = keywordNode.getNext();
+                keywordCount++;
+            }
+            details.append("\n");
+            
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            details.append("📈 ANÁLISIS DE FRECUENCIAS DE PALABRAS CLAVE\n");
+            details.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            
+            HashTable<String, Integer> frequencies = analysis.getKeywordFrequencies();
+            
+            if (frequencies.isEmpty()) {
+                details.append("No se encontraron palabras clave en el texto.\n\n");
+            } else {
+                // Get all keyword-frequency pairs
+                LinkedList<String> keywordsList = frequencies.getKeys();
+                
+                // Calculate total occurrences for percentage
+                int totalOccurrences = 0;
+                Node<String> keyNode = keywordsList.getHead();
+                while (keyNode != null) {
+                    Integer freq = frequencies.get(keyNode.getData());
+                    totalOccurrences += freq;
+                    keyNode = keyNode.getNext();
+                }
+                
+                // Build sorted list of entries
+                java.util.List<java.util.Map.Entry<String, Integer>> sortedEntries = 
+                    new java.util.ArrayList<>();
+                
+                keyNode = keywordsList.getHead();
+                while (keyNode != null) {
+                    String keyword = keyNode.getData();
+                    Integer freq = frequencies.get(keyword);
+                    sortedEntries.add(new java.util.AbstractMap.SimpleEntry<>(keyword, freq));
+                    keyNode = keyNode.getNext();
+                }
+                
+                // Sort by frequency (descending)
+                sortedEntries.sort((a, b) -> b.getValue().compareTo(a.getValue()));
+                
+                // Format as table
+                details.append(String.format("%-30s %12s %12s\n", "Palabra Clave", "Frecuencia", "Porcentaje"));
+                details.append("─────────────────────────────────────────────────────────\n");
+                
+                for (java.util.Map.Entry<String, Integer> entry : sortedEntries) {
+                    String keyword = entry.getKey();
+                    int freq = entry.getValue();
+                    double percentage = (totalOccurrences > 0) ? (freq * 100.0 / totalOccurrences) : 0;
+                    
+                    details.append(String.format("%-30s %12d %11.2f%%\n", 
+                        keyword, freq, percentage));
+                }
+                
+                details.append("\n");
+                details.append(String.format("Total de ocurrencias: %d\n", totalOccurrences));
+                details.append(String.format("Palabras clave únicas encontradas: %d\n", sortedEntries.size()));
+            }
+            
+            // Display in TextArea
+            analyzeDetailsTextArea.setText(details.toString());
+            analyzeDetailsTextArea.setCaretPosition(0); // Scroll to top
+            
+            // Show the details section
+            analyzeDetailsTextArea.setVisible(true);
+            
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Error al analizar el resumen:\n" + e.getMessage(),
+                "Error",
+                javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+            logger.log(java.util.logging.Level.SEVERE, "Error analyzing summary", e);
+        }
+    }//GEN-LAST:event_AnalyzeButtonActionPerformed
+
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton AnalyzeButton;
     private javax.swing.JButton addSummaryConfirmButton;
     private javax.swing.JPanel addSummaryPanel;
     private javax.swing.JTextArea addSummaryPreviewTextArea;
@@ -403,12 +665,18 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JButton addSummarySelectFileButton;
     private javax.swing.JSeparator addSummarySeparator1;
     private javax.swing.JLabel addSummaryTitleLabel;
+    private javax.swing.JTextArea analyzeDetailsTextArea;
+    private javax.swing.JScrollPane analyzeScrollPaneDetails;
     private javax.swing.JPanel analyzeSummaryPanel;
+    private javax.swing.JLabel analyzeSummaryTitleLabel;
+    private javax.swing.JLabel analyzeSummaryTitleLabel1;
+    private javax.swing.JComboBox<String> analyzeTitlesComboBox;
     private javax.swing.JPanel headerPanel;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JPanel listKeywordPanel;
     private javax.swing.JPanel searchAuthorPanel;
     private javax.swing.JPanel searchKeywordPanel;
+    private javax.swing.JSeparator separator2;
     private javax.swing.JLabel titleLabel;
     // End of variables declaration//GEN-END:variables
 }

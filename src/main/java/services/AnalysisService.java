@@ -59,7 +59,7 @@ public class AnalysisService {
         }
         
         // Get all keywords from repository
-        LinkedList<String> allKeywords = repository.getAllKeywordsSorted();
+        LinkedList<String> allKeywords = summary.getKeywords();
         
         // Normalize the summary body for comparison
         String normalizedBody = normalizeText(summary.getBody());
