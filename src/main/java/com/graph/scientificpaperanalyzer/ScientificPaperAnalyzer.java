@@ -4,98 +4,42 @@
 
 package com.graph.scientificpaperanalyzer;
 
-import io.SummaryParser;
-import models.Summary;
-import basicdatastructures.Node;
+import repositories.Repository;
+import services.SummaryService;
+import services.AnalysisService;
+import services.SearchService;
+import services.KeywordService;
+import ui.MainFrame;
+import javax.swing.SwingUtilities;
+import javax.swing.JOptionPane;
+import java.io.IOException;
+
 
 /**
  * Main class for Scientific Paper Analyzer.
- * Currently contains temporary tests for SummaryParser.
- * TODO: Remove test code when UI is implemented.
  * 
  * @author rafaelc3127
  */
 public class ScientificPaperAnalyzer {
-
     public static void main(String[] args) {
-        System.out.println("=== SCIENTIFIC PAPER ANALYZER - PARSER TEST ===");
-        System.out.println();
-        
-        // Test all 6 sample files
-        String[] testFiles = {
-            "data/resumen1.txt",
-            "data/resumen2.txt",
-            "data/resumen3.txt",
-            "data/resumen4.txt",
-            "data/resumen5.txt",
-            "data/resumen6.txt"
-        };
-        
-        int successCount = 0;
-        int errorCount = 0;
-        
-        for (String filepath : testFiles) {
-            System.out.println("\n" + "=".repeat(80));
-            System.out.println("Testing file: " + filepath);
-            System.out.println("=".repeat(80));
-            
+        SwingUtilities.invokeLater(() -> {
             try {
-                // Parse file
-                Summary summary = SummaryParser.parseFromFile(filepath);
+                Repository repo = new Repository("data");
+                int loaded = repo.loadAll();
+                System.out.println("Loaded " + loaded + " summaries");
                 
-                // Display results
-                System.out.println();
-                System.out.println("Title: " + summary.getTitle());
+                SummaryService sumService = new SummaryService(repo);
+                AnalysisService anaService = new AnalysisService(repo);
+                SearchService seaService = new SearchService(repo);
+                KeywordService keyService = new KeywordService(repo);
                 
-                System.out.print("Authors: ");
-                Node<String> author = summary.getAuthors().getHead();
-                boolean first = true;
-                while (author != null) {
-                    if (!first) System.out.print(", ");
-                    System.out.print(author.getData());
-                    first = false;
-                    author = author.getNext();
-                }
-                System.out.println();
+                MainFrame frame = new MainFrame(sumService, anaService, seaService, keyService);
+                frame.setVisible(true);
                 
-                System.out.println("\nBody (first 100 chars): " + 
-                    (summary.getBody().length() > 100 ? 
-                        summary.getBody().substring(0, 100) + "..." : 
-                        summary.getBody()));
-                
-                System.out.print("\nKeywords: ");
-                Node<String> keyword = summary.getKeywords().getHead();
-                first = true;
-                while (keyword != null) {
-                    if (!first) System.out.print(", ");
-                    System.out.print(keyword.getData());
-                    first = false;
-                    keyword = keyword.getNext();
-                }
-                System.out.println();
-                
-                System.out.println("\n✅ SUCCESS - File parsed correctly");
-                successCount++;
-                
-            } catch (Exception e) {
-                System.err.println("\n❌ ERROR: " + e.getMessage());
+            } catch (IOException e) {
                 e.printStackTrace();
-                errorCount++;
+                JOptionPane.showMessageDialog(null, "Error al cargar datos: " + e.getMessage());
             }
-        }
-        
-        // Summary
-        System.out.println("\n" + "=".repeat(80));
-        System.out.println("TEST SUMMARY");
-        System.out.println("=".repeat(80));
-        System.out.println("Total files tested: " + testFiles.length);
-        System.out.println("✅ Successful: " + successCount);
-        System.out.println("❌ Errors: " + errorCount);
-        
-        if (errorCount == 0) {
-            System.out.println("\n🎉 ALL TESTS PASSED! Parser is working correctly.");
-        } else {
-            System.out.println("\n⚠️ Some tests failed. Please review errors above.");
-        }
+        });
     }
 }
