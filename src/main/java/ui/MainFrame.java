@@ -207,7 +207,7 @@ public class MainFrame extends javax.swing.JFrame {
             basicdatastructures.LinkedList<String> keywords = keywordService.getAllKeywordsSorted();
             
             if (keywords.isEmpty()) {
-                listKeywordTitleLabel1.setText("📊 Palabras Clave del Sistema: (0)");
+                listKeywordTitleLabel.setText("📊 Palabras Clave del Sistema: (0)");
                 return;
             }
             
@@ -220,7 +220,7 @@ public class MainFrame extends javax.swing.JFrame {
             }
             
             // Update counter label
-            listKeywordTitleLabel1.setText("📊 Palabras Clave del Sistema: (" + count + ")");
+            listKeywordTitleLabel.setText("📊 Palabras Clave del Sistema: (" + count + ")");
             
             // Fill table with keywords and their paper counts
             current = keywords.getHead();
