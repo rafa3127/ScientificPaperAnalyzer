@@ -1,0 +1,6 @@
+Análisis de rendimiento de estructuras de datos en aplicaciones de tiempo real
+Autores
+Carlos Rodríguez
+Resumen
+Las aplicaciones de tiempo real requieren estructuras de datos eficientes para garantizar respuestas rápidas y predecibles. Este estudio analiza el rendimiento de diferentes estructuras como árboles AVL, tablas hash y listas enlazadas en escenarios de alta concurrencia. Se realizaron pruebas exhaustivas midiendo tiempos de inserción, búsqueda y eliminación bajo diferentes cargas de trabajo. Los resultados muestran que las tablas hash ofrecen el mejor rendimiento promedio para operaciones de búsqueda, mientras que los árboles AVL son superiores cuando se requiere mantener datos ordenados.
+Palabras claves: estructuras de datos, rendimiento, tiempo real, árboles AVL, tablas hash

@@ -1050,8 +1050,8 @@ public class MainFrame extends javax.swing.JFrame {
            "Archivos de texto (.txt)", "txt"
        ));
        
-       // Set initial directory to data/resumenes if exists
-       java.io.File dataDir = new java.io.File("data/resumenes");
+       // Set initial directory to data if exists
+       java.io.File dataDir = new java.io.File("data");
        if (dataDir.exists()) {
            fileChooser.setCurrentDirectory(dataDir);
        }

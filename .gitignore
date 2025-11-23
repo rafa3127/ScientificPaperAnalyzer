@@ -93,5 +93,4 @@ gradle-app.setting
 !gradle-wrapper.jar
 .gradletasknamecache
 
-# Serialized data files 
-/data
+
