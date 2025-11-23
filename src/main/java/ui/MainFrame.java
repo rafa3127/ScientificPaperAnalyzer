@@ -39,6 +39,9 @@ public class MainFrame extends javax.swing.JFrame {
         searchKeywordResultsTable.setDefaultEditor(Object.class, null);
         searchAuthorResultsTable.setEnabled(true);
         searchAuthorResultsTable.setDefaultEditor(Object.class, null);
+        listKeywordTable.setEnabled(true);
+        listKeywordTable.setDefaultEditor(Object.class, null);
+        
         
         this.summaryService = summaryService;
         this.analysisService = analysisService;
@@ -59,9 +62,13 @@ public class MainFrame extends javax.swing.JFrame {
             else if (selectedIndex == 3) {
                loadSearchAuthors();
             }
+            else if (selectedIndex == 4) {
+                loadListKeywords();
+            }
         });
         setupSearchAuthorTableListener();
         setupSearchKeywordTableListener();
+        setupListKeywordTableListener();
     }
     
     /**
@@ -183,6 +190,71 @@ public class MainFrame extends javax.swing.JFrame {
                 javax.swing.JOptionPane.ERROR_MESSAGE
             );
             logger.log(java.util.logging.Level.SEVERE, "Error loading authors", e);
+        }
+    }
+    
+    /**
+     * Loads all keywords with their frequencies when the List Keywords tab is activated
+     */
+    private void loadListKeywords() {
+        try {
+            // Clear table
+            javax.swing.table.DefaultTableModel model = 
+                (javax.swing.table.DefaultTableModel) listKeywordTable.getModel();
+            model.setRowCount(0);
+            
+            // Get all keywords sorted
+            basicdatastructures.LinkedList<String> keywords = keywordService.getAllKeywordsSorted();
+            
+            if (keywords.isEmpty()) {
+                listKeywordTitleLabel1.setText("📊 Palabras Clave del Sistema: (0)");
+                return;
+            }
+            
+            // Count keywords
+            int count = 0;
+            basicdatastructures.Node<String> current = keywords.getHead();
+            while (current != null) {
+                count++;
+                current = current.getNext();
+            }
+            
+            // Update counter label
+            listKeywordTitleLabel1.setText("📊 Palabras Clave del Sistema: (" + count + ")");
+            
+            // Fill table with keywords and their paper counts
+            current = keywords.getHead();
+            while (current != null) {
+                String keyword = current.getData();
+                
+                // Get details for this keyword to know how many papers
+                models.KeywordDetails details = keywordService.getKeywordDetails(keyword);
+                int paperCount = 0;
+                
+                if (details != null && details.getSummaries() != null) {
+                    basicdatastructures.Node<models.Summary> sumNode = details.getSummaries().getHead();
+                    while (sumNode != null) {
+                        paperCount++;
+                        sumNode = sumNode.getNext();
+                    }
+                }
+                
+                model.addRow(new Object[]{
+                    keyword,
+                    paperCount
+                });
+                
+                current = current.getNext();
+            }
+            
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Error al cargar las palabras clave:\n" + e.getMessage(),
+                "Error",
+                javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+            logger.log(java.util.logging.Level.SEVERE, "Error loading keywords list", e);
         }
     }
     
@@ -404,6 +476,126 @@ public class MainFrame extends javax.swing.JFrame {
             logger.log(java.util.logging.Level.SEVERE, "Error showing summary details", e);
         }
     }
+    
+    /**
+     * Sets up the table click listener for viewing keyword details
+     */
+    private void setupListKeywordTableListener() {
+        listKeywordTable.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                int row = listKeywordTable.getSelectedRow();
+                if (row >= 0) {
+                    showKeywordDetails(row);
+                }
+            }
+        });
+    }
+    
+    /**
+     * Shows details of a selected keyword in a dialog
+     */
+    private void showKeywordDetails(int rowIndex) {
+        try {
+            // Get the keyword from the table
+            String keyword = (String) listKeywordTable.getValueAt(rowIndex, 0);
+            
+            if (keyword == null || keyword.isEmpty()) {
+                return;
+            }
+            
+            // Get keyword details
+            models.KeywordDetails details = keywordService.getKeywordDetails(keyword);
+            
+            if (details == null) {
+                javax.swing.JOptionPane.showMessageDialog(
+                    this,
+                    "No se encontraron detalles para la palabra clave: " + keyword,
+                    "Sin Información",
+                    javax.swing.JOptionPane.INFORMATION_MESSAGE
+                );
+                return;
+            }
+            
+            // Build details text
+            StringBuilder detailsText = new StringBuilder();
+            
+            detailsText.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            detailsText.append("🔑 PALABRA CLAVE\n");
+            detailsText.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            detailsText.append(details.getKeyword()).append("\n\n");
+            
+            detailsText.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            detailsText.append("📈 FRECUENCIA GLOBAL\n");
+            detailsText.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            detailsText.append("Esta palabra clave aparece en ");
+            detailsText.append(details.getFrequency());
+            detailsText.append(" investigación(es)\n\n");
+            
+            detailsText.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            detailsText.append("📚 INVESTIGACIONES QUE CONTIENEN ESTA PALABRA CLAVE\n");
+            detailsText.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
+            
+            basicdatastructures.LinkedList<models.Summary> summaries = details.getSummaries();
+            
+            if (summaries == null || summaries.isEmpty()) {
+                detailsText.append("No hay investigaciones asociadas.\n");
+            } else {
+                int index = 1;
+                basicdatastructures.Node<models.Summary> current = summaries.getHead();
+                while (current != null) {
+                    models.Summary summary = current.getData();
+                    detailsText.append(index).append(". ");
+                    detailsText.append(summary.getTitle()).append("\n");
+                    
+                    // Add authors
+                    detailsText.append("   Autores: ");
+                    basicdatastructures.LinkedList<String> authors = summary.getAuthors();
+                    basicdatastructures.Node<String> authorNode = authors.getHead();
+                    boolean first = true;
+                    while (authorNode != null) {
+                        if (!first) {
+                            detailsText.append(", ");
+                        }
+                        detailsText.append(authorNode.getData());
+                        first = false;
+                        authorNode = authorNode.getNext();
+                    }
+                    detailsText.append("\n\n");
+                    
+                    current = current.getNext();
+                    index++;
+                }
+            }
+            
+            // Show in dialog
+            javax.swing.JTextArea textArea = new javax.swing.JTextArea(detailsText.toString());
+            textArea.setEditable(false);
+            textArea.setLineWrap(true);
+            textArea.setWrapStyleWord(true);
+            textArea.setCaretPosition(0);
+            textArea.setFont(new java.awt.Font("Monospaced", java.awt.Font.PLAIN, 12));
+            
+            javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(textArea);
+            scrollPane.setPreferredSize(new java.awt.Dimension(700, 500));
+            
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                scrollPane,
+                "Detalles de Palabra Clave: " + keyword,
+                javax.swing.JOptionPane.INFORMATION_MESSAGE
+            );
+            
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Error al mostrar detalles:\n" + e.getMessage(),
+                "Error",
+                javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+            logger.log(java.util.logging.Level.SEVERE, "Error showing keyword details", e);
+        }
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -450,6 +642,11 @@ public class MainFrame extends javax.swing.JFrame {
         searchAuthorResultsScrollPane = new javax.swing.JScrollPane();
         searchAuthorResultsTable = new javax.swing.JTable();
         listKeywordPanel = new javax.swing.JPanel();
+        listKeywordTitleLabel = new javax.swing.JLabel();
+        listKeywordTitleLabel1 = new javax.swing.JLabel();
+        listKeywordScrollPane = new javax.swing.JScrollPane();
+        listKeywordTable = new javax.swing.JTable();
+        jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Sistema de Gestión de Artículos Científicos");
@@ -764,15 +961,62 @@ public class MainFrame extends javax.swing.JFrame {
 
         listKeywordPanel.setBackground(new java.awt.Color(255, 255, 255));
 
+        listKeywordTitleLabel.setFont(new java.awt.Font("Helvetica Neue", 1, 18)); // NOI18N
+        listKeywordTitleLabel.setForeground(new java.awt.Color(51, 51, 51));
+        listKeywordTitleLabel.setText("📊 Palabras Clave del Sistema: (0)");
+
+        listKeywordTitleLabel1.setFont(new java.awt.Font("Helvetica Neue", 1, 18)); // NOI18N
+        listKeywordTitleLabel1.setForeground(new java.awt.Color(51, 51, 51));
+        listKeywordTitleLabel1.setText("Lista de Palabras Clave");
+
+        listKeywordTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null},
+                {null},
+                {null},
+                {null}
+            },
+            new String [] {
+                "Palabra"
+            }
+        ));
+        listKeywordTable.setEnabled(false);
+        listKeywordScrollPane.setViewportView(listKeywordTable);
+
+        jLabel1.setText("💡 Haga click en una palabra clave para ver detalles y papers asociados    ");
+
         javax.swing.GroupLayout listKeywordPanelLayout = new javax.swing.GroupLayout(listKeywordPanel);
         listKeywordPanel.setLayout(listKeywordPanelLayout);
         listKeywordPanelLayout.setHorizontalGroup(
             listKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 1588, Short.MAX_VALUE)
+            .addGroup(listKeywordPanelLayout.createSequentialGroup()
+                .addGap(52, 52, 52)
+                .addGroup(listKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel1)
+                    .addComponent(listKeywordScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 255, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(listKeywordTitleLabel))
+                .addContainerGap(1090, Short.MAX_VALUE))
+            .addGroup(listKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(listKeywordPanelLayout.createSequentialGroup()
+                    .addGap(54, 54, 54)
+                    .addComponent(listKeywordTitleLabel1)
+                    .addContainerGap(1334, Short.MAX_VALUE)))
         );
         listKeywordPanelLayout.setVerticalGroup(
             listKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 636, Short.MAX_VALUE)
+            .addGroup(listKeywordPanelLayout.createSequentialGroup()
+                .addGap(115, 115, 115)
+                .addComponent(listKeywordTitleLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(listKeywordScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 269, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel1)
+                .addContainerGap(173, Short.MAX_VALUE))
+            .addGroup(listKeywordPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(listKeywordPanelLayout.createSequentialGroup()
+                    .addGap(45, 45, 45)
+                    .addComponent(listKeywordTitleLabel1)
+                    .addContainerGap(568, Short.MAX_VALUE)))
         );
 
         jTabbedPane1.addTab("📋 Listar Keywords", listKeywordPanel);
@@ -1289,8 +1533,13 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JLabel analyzeSummaryTitleLabel1;
     private javax.swing.JComboBox<String> analyzeTitlesComboBox;
     private javax.swing.JPanel headerPanel;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JPanel listKeywordPanel;
+    private javax.swing.JScrollPane listKeywordScrollPane;
+    private javax.swing.JTable listKeywordTable;
+    private javax.swing.JLabel listKeywordTitleLabel;
+    private javax.swing.JLabel listKeywordTitleLabel1;
     private javax.swing.JButton searchAuthorButton;
     private javax.swing.JComboBox<String> searchAuthorComboBox;
     private javax.swing.JPanel searchAuthorPanel;
