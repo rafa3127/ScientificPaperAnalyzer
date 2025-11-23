@@ -43,9 +43,10 @@ Sistema para administrar y analizar resúmenes de artículos científicos. Permi
 - [x] AVL para palabras claves
 
 ### Fase 4: Servicios
-- [ ] ResumenService (agregar, validar)
-- [ ] BusquedaService (buscar por palabra/autor)
-- [ ] AnalisisService (contar frecuencias)
+- [x] Servicio de resumenes
+- [x] Servicio de Keywords
+- [x] Servicio de busqueda
+- [x] Servicio de análisis de resumenes
 
 ### Fase 5: UI
 - [ ] MainFrame
@@ -57,7 +58,5 @@ Sistema para administrar y analizar resúmenes de artículos científicos. Permi
 - [ ] Javadoc completo
 - [ ] Diagrama UML
 - [ ] README.md
-- [ ] Precarga de datos
-- [ ] Tests de integración
 
 ---
